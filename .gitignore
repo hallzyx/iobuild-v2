@@ -1,0 +1,27 @@
+# .NET build and test output
+**/bin/
+**/obj/
+.vs/
+TestResults/
+coverage/
+coverage.*
+*.coverage
+*.coveragexml
+
+# Local tooling
+.idea/
+.vscode/
+*.user
+*.suo
+
+# Secrets and local environment
+.env
+.env.*
+!.env.example
+appsettings.Local.json
+appsettings.*.Local.json
+secrets.json
+
+# Operating system files
+.DS_Store
+Thumbs.db
