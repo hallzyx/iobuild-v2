@@ -3,6 +3,7 @@ using System.Text.Json;
 using IoBuild.Api.Analytics;
 using IoBuild.Api.CoreBusiness;
 using IoBuild.Api.Contracts;
+using IoBuild.Api.Cutover;
 using IoBuild.Api.Iam;
 using IoBuild.Api.Devices;
 using IoBuild.Api.Persistence;
@@ -18,6 +19,8 @@ var jwtSecret = builder.Configuration["Jwt:Secret"] ?? "iobuild-development-secr
 
 builder.Services.AddDbContext<IoBuildDbContext>(options => options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
 builder.Services.AddSingleton<MigrationReadiness>();
+builder.Services.AddSingleton<CutoverReadiness>();
+builder.Services.AddScoped<ICutoverHarness, CutoverHarness>();
 builder.Services.AddScoped<IMigrationRunner, EfMigrationRunner>();
 builder.Services.AddScoped<WorkflowExecutor>();
 builder.Services.AddScoped<IIntegrationDispatchQueue, IntegrationDispatchQueue>();
@@ -83,6 +86,20 @@ app.Use(async (context, next) =>
     {
         context.Response.StatusCode = StatusCodes.Status503ServiceUnavailable;
         await context.Response.WriteAsJsonAsync(new { error = "migration_readiness_failed" });
+        return;
+    }
+    await next();
+});
+app.Use(async (context, next) =>
+{
+    var cutover = context.RequestServices.GetRequiredService<CutoverReadiness>();
+    var isWrite = context.Request.Method is "POST" or "PUT" or "PATCH" or "DELETE";
+    // Cutover control endpoints must remain writable while frozen to allow stabilize/freeze
+    var isCutoverControl = context.Request.Path.StartsWithSegments("/api/v1/cutover");
+    if (context.Request.Path.StartsWithSegments("/api/v1") && isWrite && cutover.ShouldBlockWrites && !isCutoverControl)
+    {
+        context.Response.StatusCode = StatusCodes.Status503ServiceUnavailable;
+        await context.Response.WriteAsJsonAsync(new { error = "cutover_freeze_active" });
         return;
     }
     await next();
@@ -263,6 +280,23 @@ app.MapPost("/api/v1/webhooks/stripe", async (HttpRequest request, StripeWebhook
         ? Results.Ok(new { received = true, eventId })
         : Results.Unauthorized();
 }).AllowAnonymous();
+
+app.MapGet("/api/v1/cutover/status", (CutoverReadiness readiness) => readiness.ShouldBlockWrites
+    ? Results.Json(new { status = "frozen", reason = readiness.FailureReason }, statusCode: StatusCodes.Status503ServiceUnavailable)
+    : Results.Ok(new { status = "ready" }));
+app.MapPost("/api/v1/cutover/freeze", (System.Security.Claims.ClaimsPrincipal user, CutoverReadiness readiness) =>
+{
+    var role = user.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? user.FindFirst("role")?.Value ?? string.Empty;
+    if (!string.Equals(role, "Admin", StringComparison.OrdinalIgnoreCase) && !string.Equals(role, "Administrator", StringComparison.OrdinalIgnoreCase))
+        return Results.Json(new { error = "admin_required" }, statusCode: StatusCodes.Status403Forbidden);
+    readiness.Freeze();
+    return Results.Ok(new { status = "frozen" });
+}).RequireAuthorization();
+app.MapPost("/api/v1/cutover/stabilize", async (System.Security.Claims.ClaimsPrincipal user, ICutoverHarness harness) =>
+{
+    var ok = await harness.StabilizeAsync(user);
+    return ok ? Results.Ok(new { status = "ready" }) : Results.Json(new { error = "admin_required" }, statusCode: StatusCodes.Status403Forbidden);
+}).RequireAuthorization();
 
 app.Run();
 
