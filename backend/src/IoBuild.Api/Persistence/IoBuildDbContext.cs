@@ -12,6 +12,13 @@ public sealed class IoBuildDbContext(DbContextOptions<IoBuildDbContext> options)
     public DbSet<Profile> Profiles => Set<Profile>();
     public DbSet<Subscription> Subscriptions => Set<Subscription>();
     public DbSet<SubscriptionWebhook> SubscriptionWebhooks => Set<SubscriptionWebhook>();
+    public DbSet<Device> Devices => Set<Device>();
+    public DbSet<DeviceShadow> DeviceShadows => Set<DeviceShadow>();
+    public DbSet<DeviceCommand> DeviceCommands => Set<DeviceCommand>();
+    public DbSet<DeviceTelemetry> DeviceTelemetry => Set<DeviceTelemetry>();
+    public DbSet<TelemetryRecovery> TelemetryRecoveries => Set<TelemetryRecovery>();
+    public DbSet<UnitOwnerProjection> UnitOwnerProjections => Set<UnitOwnerProjection>();
+    public DbSet<DeviceRegistryTombstone> DeviceRegistryTombstones => Set<DeviceRegistryTombstone>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -76,6 +83,13 @@ public sealed class IoBuildDbContext(DbContextOptions<IoBuildDbContext> options)
             entity.HasIndex(subscription => new { subscription.BuilderId, subscription.PlanId, subscription.Status });
             entity.Property(subscription => subscription.Status).HasMaxLength(40).IsRequired();
         });
+        modelBuilder.Entity<Device>(entity => { entity.ToTable("devices"); entity.HasKey(device => device.Id); entity.HasIndex(device => device.MacAddress).IsUnique(); entity.HasIndex(device => new { device.ProjectId, device.UnitId, device.Type }).IsUnique(); entity.Property(device => device.MacAddress).HasMaxLength(17); entity.Property(device => device.Source).HasMaxLength(30); entity.Property(device => device.Name).HasMaxLength(200).IsRequired(); entity.Property(device => device.Type).HasMaxLength(100).IsRequired(); entity.Property(device => device.Location).HasMaxLength(500).IsRequired(); entity.Property(device => device.Status).HasMaxLength(40).IsRequired(); });
+        modelBuilder.Entity<DeviceShadow>(entity => { entity.ToTable("device_shadows"); entity.HasKey(shadow => shadow.DeviceId); entity.Property(shadow => shadow.DesiredJson).IsRequired(); });
+        modelBuilder.Entity<DeviceCommand>(entity => { entity.ToTable("device_commands"); entity.HasKey(command => command.Id); entity.HasIndex(command => command.CommandId).IsUnique(); entity.HasIndex(command => command.DeviceId); entity.HasIndex(command => new { command.DeviceId, command.AcknowledgedAt, command.IssuedAt }); entity.Property(command => command.CommandId).HasMaxLength(64); entity.Property(command => command.DesiredJson).IsRequired(); });
+        modelBuilder.Entity<DeviceTelemetry>(entity => { entity.ToTable("device_telemetry"); entity.HasKey(telemetry => telemetry.Id); entity.HasIndex(telemetry => telemetry.EventId).IsUnique(); entity.HasIndex(telemetry => new { telemetry.DeviceId, telemetry.OccurredAt }); entity.Property(telemetry => telemetry.EventId).HasMaxLength(128); entity.Property(telemetry => telemetry.Status).HasMaxLength(40); entity.Property(telemetry => telemetry.ReportedJson).IsRequired(); });
+        modelBuilder.Entity<TelemetryRecovery>(entity => { entity.ToTable("telemetry_recovery"); entity.HasKey(recovery => recovery.Id); entity.HasIndex(recovery => recovery.EventId).IsUnique(); entity.Property(recovery => recovery.EventId).HasMaxLength(128); });
+        modelBuilder.Entity<UnitOwnerProjection>(entity => { entity.ToTable("unit_owner_projections"); entity.HasKey(item => item.UnitId); entity.HasIndex(item => new { item.UnitId, item.OwnerUserId }).IsUnique(); });
+        modelBuilder.Entity<DeviceRegistryTombstone>(entity => { entity.ToTable("device_registry_tombstones"); entity.HasKey(item => item.DeviceId); });
         modelBuilder.Entity<SubscriptionWebhook>(entity =>
         {
             entity.ToTable("subscription_webhooks");
@@ -112,3 +126,11 @@ public sealed class Project { public int Id { get; set; } public string Name { g
 public sealed class Profile { public int Id { get; set; } public int UserId { get; set; } public string Name { get; set; } = string.Empty; public string Username { get; set; } = string.Empty; public string? PhotoReference { get; set; } public string? CloudinaryReference { get; set; } }
 public sealed class Subscription { public int Id { get; set; } public int BuilderId { get; set; } public int PlanId { get; set; } public string Status { get; set; } = "active"; public DateTimeOffset StartDate { get; set; } = DateTimeOffset.UtcNow; public DateTimeOffset? EndDate { get; set; } }
 public sealed class SubscriptionWebhook { public string EventId { get; set; } = string.Empty; public string EventType { get; set; } = string.Empty; public DateTimeOffset ReceivedAt { get; set; } }
+
+public sealed class Device { public int Id { get; set; } public string Name { get; set; } = string.Empty; public string Type { get; set; } = string.Empty; public string Location { get; set; } = string.Empty; public string? MacAddress { get; set; } public int ProjectId { get; set; } public int? UnitId { get; set; } public int OwnerId { get; set; } public string? Source { get; set; } public string Status { get; set; } = "unknown"; }
+public sealed class DeviceShadow { public int DeviceId { get; set; } public string DesiredJson { get; set; } = "{}"; public string? ReportedJson { get; set; } public DateTimeOffset ReportedAt { get; set; } = DateTimeOffset.MinValue; public long ShadowVersion { get; set; } public DateTimeOffset UpdatedAt { get; set; } }
+public sealed class DeviceCommand { public long Id { get; set; } public int DeviceId { get; set; } public string CommandId { get; set; } = string.Empty; public string DesiredJson { get; set; } = "{}"; public DateTimeOffset IssuedAt { get; set; } public DateTimeOffset? PublishedAt { get; set; } public int PublishAttempts { get; set; } public DateTimeOffset? AcknowledgedAt { get; set; } }
+public sealed class DeviceTelemetry { public long Id { get; set; } public int DeviceId { get; set; } public string EventId { get; set; } = string.Empty; public DateTimeOffset OccurredAt { get; set; } public string Status { get; set; } = string.Empty; public string ReportedJson { get; set; } = "{}"; public double EnergyKwh { get; set; } public double TemperatureC { get; set; } public double VoltageV { get; set; } public DateTimeOffset? InfluxWrittenAt { get; set; } }
+public sealed class TelemetryRecovery { public long Id { get; set; } public string EventId { get; set; } = string.Empty; public DateTimeOffset CreatedAt { get; set; } }
+public sealed class UnitOwnerProjection { public int UnitId { get; set; } public int OwnerUserId { get; set; } public DateTimeOffset UpdatedAt { get; set; } = DateTimeOffset.UtcNow; }
+public sealed class DeviceRegistryTombstone { public int DeviceId { get; set; } public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow; public DateTimeOffset? PublishedAt { get; set; } public int PublishAttempts { get; set; } }
