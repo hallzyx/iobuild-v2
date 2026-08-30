@@ -8,6 +8,10 @@ public sealed class IoBuildDbContext(DbContextOptions<IoBuildDbContext> options)
     public DbSet<IamUser> IamUsers => Set<IamUser>();
     public DbSet<RevokedToken> RevokedTokens => Set<RevokedToken>();
     public DbSet<IntegrationDispatch> IntegrationDispatches => Set<IntegrationDispatch>();
+    public DbSet<Project> Projects => Set<Project>();
+    public DbSet<Profile> Profiles => Set<Profile>();
+    public DbSet<Subscription> Subscriptions => Set<Subscription>();
+    public DbSet<SubscriptionWebhook> SubscriptionWebhooks => Set<SubscriptionWebhook>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -46,6 +50,39 @@ public sealed class IoBuildDbContext(DbContextOptions<IoBuildDbContext> options)
             entity.Property(dispatch => dispatch.Payload).IsRequired();
             entity.Property(dispatch => dispatch.Status).HasConversion<string>().HasMaxLength(20);
         });
+        modelBuilder.Entity<Project>(entity =>
+        {
+            entity.ToTable("projects");
+            entity.HasKey(project => project.Id);
+            entity.Property(project => project.Name).HasMaxLength(200).IsRequired();
+            entity.Property(project => project.Description).HasMaxLength(2000).IsRequired();
+            entity.Property(project => project.Location).HasMaxLength(500).IsRequired();
+            entity.Property(project => project.ImageUrl).HasMaxLength(2000);
+        });
+        modelBuilder.Entity<Profile>(entity =>
+        {
+            entity.ToTable("profiles");
+            entity.HasKey(profile => profile.Id);
+            entity.HasIndex(profile => profile.UserId).IsUnique();
+            entity.Property(profile => profile.Name).HasMaxLength(200).IsRequired();
+            entity.Property(profile => profile.Username).HasMaxLength(100).IsRequired();
+            entity.Property(profile => profile.PhotoReference).HasMaxLength(128);
+            entity.Property(profile => profile.CloudinaryReference).HasMaxLength(2000);
+        });
+        modelBuilder.Entity<Subscription>(entity =>
+        {
+            entity.ToTable("subscriptions");
+            entity.HasKey(subscription => subscription.Id);
+            entity.HasIndex(subscription => new { subscription.BuilderId, subscription.PlanId, subscription.Status });
+            entity.Property(subscription => subscription.Status).HasMaxLength(40).IsRequired();
+        });
+        modelBuilder.Entity<SubscriptionWebhook>(entity =>
+        {
+            entity.ToTable("subscription_webhooks");
+            entity.HasKey(webhook => webhook.EventId);
+            entity.Property(webhook => webhook.EventId).HasMaxLength(255);
+            entity.Property(webhook => webhook.EventType).HasMaxLength(120).IsRequired();
+        });
     }
 }
 
@@ -71,3 +108,7 @@ public sealed class IntegrationDispatch
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
 }
+public sealed class Project { public int Id { get; set; } public string Name { get; set; } = string.Empty; public string Description { get; set; } = string.Empty; public string Location { get; set; } = string.Empty; public int TotalUnits { get; set; } public int BuilderId { get; set; } public string? ImageUrl { get; set; } public bool StructureDefined { get; set; } public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow; }
+public sealed class Profile { public int Id { get; set; } public int UserId { get; set; } public string Name { get; set; } = string.Empty; public string Username { get; set; } = string.Empty; public string? PhotoReference { get; set; } public string? CloudinaryReference { get; set; } }
+public sealed class Subscription { public int Id { get; set; } public int BuilderId { get; set; } public int PlanId { get; set; } public string Status { get; set; } = "active"; public DateTimeOffset StartDate { get; set; } = DateTimeOffset.UtcNow; public DateTimeOffset? EndDate { get; set; } }
+public sealed class SubscriptionWebhook { public string EventId { get; set; } = string.Empty; public string EventType { get; set; } = string.Empty; public DateTimeOffset ReceivedAt { get; set; } }
