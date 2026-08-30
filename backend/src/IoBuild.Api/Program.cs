@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json;
+using IoBuild.Api.Analytics;
 using IoBuild.Api.CoreBusiness;
 using IoBuild.Api.Contracts;
 using IoBuild.Api.Iam;
@@ -29,6 +30,10 @@ builder.Services.AddSingleton<MqttDeviceTransport>();
 builder.Services.AddSingleton<IDeviceMqttPublisher>(services => services.GetRequiredService<MqttDeviceTransport>());
 builder.Services.AddHostedService(services => services.GetRequiredService<MqttDeviceTransport>());
 builder.Services.AddHttpClient<IInfluxTelemetrySink, InfluxHttpTelemetrySink>();
+builder.Services.AddHttpClient<ILiveEnergyService, LiveEnergyService>();
+builder.Services.AddHttpClient<ILiveDeviceStatusService, LiveDeviceStatusService>();
+builder.Services.AddScoped<IAnalyticsQueryService, AnalyticsQueryService>();
+builder.Services.AddScoped<AnalyticsProjectionImporter>();
 builder.Services.AddScoped<DeviceCommandService>();
 builder.Services.AddScoped<DeviceTelemetryService>();
 builder.Services.AddScoped<DeviceRegistryService>();
@@ -218,6 +223,33 @@ app.MapGet("/api/v1/devices/{id:int}/status", async (int id, IoBuildDbContext db
     var desired = shadow?.DesiredJson is { Length: > 0 } desiredJson ? JsonSerializer.Deserialize<JsonElement>(desiredJson) : default;
     return Results.Ok(new { deviceId = id, status = telemetry?.Status ?? "unknown", lastSeen = telemetry?.OccurredAt ?? DateTimeOffset.MinValue, temperatureC = telemetry?.TemperatureC ?? 0, voltageV = telemetry?.VoltageV ?? 0, desired });
 }).RequireAuthorization();
+app.MapGet("/api/v1/analytics/builders/{userId:int}/metrics", async (int userId, IAnalyticsQueryService analytics, CancellationToken ct) =>
+{
+    var result = await analytics.Handle(new GetBuilderDashboardQuery(userId), ct);
+    return result is null ? Results.NotFound(new { message = "No builder metrics found for the specified user." }) : Results.Ok(result);
+});
+app.MapGet("/api/v1/analytics/owners/{userId:int}/metrics", async (int userId, IAnalyticsQueryService analytics, CancellationToken ct) =>
+{
+    var result = await analytics.Handle(new GetOwnerDashboardQuery(userId), ct);
+    return result is null ? Results.NotFound(new { message = "No owner metrics found for the specified user." }) : Results.Ok(result);
+});
+app.MapGet("/api/v1/analytics/builders/{userId:int}/energy", async (int userId, int? minutes, IAnalyticsQueryService analytics, CancellationToken ct) =>
+{
+    var result = await analytics.Handle(new GetBuilderLiveEnergyQuery(userId, Math.Clamp(minutes ?? 10, 1, 60)), ct);
+    return Results.Ok(result.Select(point => new { timestamp = point.Timestamp, totalEnergyKwh = point.TotalEnergyKwh }));
+});
+app.MapGet("/api/v1/analytics/owners/{userId:int}/energy", async (int userId, int? minutes, IAnalyticsQueryService analytics, CancellationToken ct) =>
+{
+    var result = await analytics.Handle(new GetOwnerLiveEnergyQuery(userId, Math.Clamp(minutes ?? 10, 1, 60)), ct);
+    return Results.Ok(result.Select(point => new { timestamp = point.Timestamp, totalEnergyKwh = point.TotalEnergyKwh }));
+});
+app.MapGet("/api/v1/analytics/insights", async (int projectId, string? metric, DateTime? startDate, DateTime? endDate, IAnalyticsQueryService analytics, CancellationToken ct) =>
+{
+    var start = startDate ?? DateTime.UtcNow.AddDays(-30);
+    var end = endDate ?? DateTime.UtcNow;
+    var result = await analytics.Handle(new GetHistoricalDataQuery(projectId, metric ?? "temperature", start, end), ct);
+    return Results.Ok(result);
+});
 app.MapPost("/api/v1/webhooks/stripe", async (HttpRequest request, StripeWebhookProcessor processor, CancellationToken ct) =>
 {
     using var reader = new StreamReader(request.Body);

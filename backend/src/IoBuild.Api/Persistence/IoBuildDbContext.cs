@@ -19,6 +19,9 @@ public sealed class IoBuildDbContext(DbContextOptions<IoBuildDbContext> options)
     public DbSet<TelemetryRecovery> TelemetryRecoveries => Set<TelemetryRecovery>();
     public DbSet<UnitOwnerProjection> UnitOwnerProjections => Set<UnitOwnerProjection>();
     public DbSet<DeviceRegistryTombstone> DeviceRegistryTombstones => Set<DeviceRegistryTombstone>();
+    public DbSet<Analytics.DeviceProjection> DeviceProjections => Set<Analytics.DeviceProjection>();
+    public DbSet<Analytics.ProjectProjection> ProjectProjections => Set<Analytics.ProjectProjection>();
+    public DbSet<Analytics.UnitProjection> UnitProjections => Set<Analytics.UnitProjection>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -96,6 +99,32 @@ public sealed class IoBuildDbContext(DbContextOptions<IoBuildDbContext> options)
             entity.HasKey(webhook => webhook.EventId);
             entity.Property(webhook => webhook.EventId).HasMaxLength(255);
             entity.Property(webhook => webhook.EventType).HasMaxLength(120).IsRequired();
+        });
+        modelBuilder.Entity<Analytics.DeviceProjection>(entity =>
+        {
+            entity.ToTable("device_projection");
+            entity.HasKey(projection => projection.DeviceId);
+            entity.Property(projection => projection.DeviceType).HasMaxLength(64).IsRequired();
+            entity.Property(projection => projection.Status).HasMaxLength(32).IsRequired();
+            entity.HasIndex(projection => projection.OwnerUserId);
+            entity.HasIndex(projection => projection.ProjectId);
+        });
+        modelBuilder.Entity<Analytics.ProjectProjection>(entity =>
+        {
+            entity.ToTable("project_projection");
+            entity.HasKey(projection => projection.ProjectId);
+            entity.Property(projection => projection.Name).HasMaxLength(160).IsRequired();
+            entity.Property(projection => projection.Status).HasMaxLength(32).IsRequired();
+            entity.HasIndex(projection => projection.BuilderUserId);
+        });
+        modelBuilder.Entity<Analytics.UnitProjection>(entity =>
+        {
+            entity.ToTable("unit_projection");
+            entity.HasKey(projection => projection.UnitId);
+            entity.Property(projection => projection.Status).HasMaxLength(32).IsRequired();
+            entity.HasIndex(projection => projection.BuilderUserId);
+            entity.HasIndex(projection => projection.OwnerUserId);
+            entity.HasIndex(projection => projection.ProjectId);
         });
     }
 }
