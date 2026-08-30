@@ -6,10 +6,12 @@ using IoBuild.Api.Contracts;
 using IoBuild.Api.Cutover;
 using IoBuild.Api.Iam;
 using IoBuild.Api.Devices;
+using IoBuild.Api.Observability;
 using IoBuild.Api.Persistence;
 using IoBuild.Api.Readiness;
 using IoBuild.Api.Workflows;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
@@ -47,6 +49,23 @@ builder.Services.AddScoped<ProfilePhotoWorkflow>();
 builder.Services.AddScoped<StripeWebhookProcessor>(services => new StripeWebhookProcessor(
     services.GetRequiredService<IoBuildDbContext>(),
     builder.Configuration["Stripe:WebhookSecret"] ?? string.Empty));
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedHost;
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
+});
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("GatewayCorsPolicy", policy =>
+    {
+        policy.WithOrigins("http://localhost:5173", "http://localhost:3000")
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
+    });
+});
+builder.Services.AddIoBuildObservability(builder.Configuration);
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
 {
     options.TokenValidationParameters = new TokenValidationParameters
@@ -71,6 +90,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
 builder.Services.AddAuthorization();
 
 var app = builder.Build();
+
+app.UseForwardedHeaders();
+app.UseCors("GatewayCorsPolicy");
 
 if (builder.Configuration.GetValue<bool>("Migrations:ApplyOnStartup"))
 {

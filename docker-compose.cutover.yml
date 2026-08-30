@@ -9,6 +9,7 @@ services:
     environment:
       - ASPNETCORE_URLS=http://+:8080
       - ConnectionStrings__IoBuild=Server=mysql-monolith;Port=3306;Database=iobuild;User=root;Password=iobuild
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317
     depends_on:
       mysql-monolith:
         condition: service_healthy
@@ -25,6 +26,28 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
+
+  # Jaeger — optional OTLP collector; app must start healthy when absent
+  jaeger:
+    image: jaegertracing/all-in-one:1.62
+    container_name: iobuild-jaeger
+    restart: unless-stopped
+    ports:
+      - "16686:16686"
+      - "4317:4317"
+      - "4318:4318"
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+
+  # Frontend — Vue SPA built via Vite
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: iobuild-frontend
+    restart: unless-stopped
+    depends_on:
+      - iobuild-api
 
   nginx:
     image: nginx:alpine
