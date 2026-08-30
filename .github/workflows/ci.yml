@@ -1,0 +1,69 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET 9
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "9.0.x"
+
+      - name: Restore
+        run: dotnet restore backend/IoBuild.sln
+
+      - name: Build
+        run: dotnet build backend/IoBuild.sln --no-restore
+
+      - name: Test
+        run: dotnet test backend/IoBuild.sln --no-restore --verbosity normal
+
+      - name: Docker build (monolith)
+        run: docker build -f backend/Dockerfile -t iobuild-api:ci ./backend
+
+      - name: Docker build (frontend)
+        run: docker build -t iobuild-frontend:ci ./frontend
+
+      - name: Compose config validation
+        run: docker compose -f docker-compose.yml config
+
+      - name: Compose up (smoke)
+        run: docker compose -f docker-compose.yml up -d --wait
+
+      - name: Wait for API health
+        run: |
+          for i in $(seq 1 30); do
+            if curl -f http://localhost:80/health || curl -f http://localhost:8080/health; then
+              echo "health ok on attempt $i"
+              exit 0
+            fi
+            echo "waiting for health ($i/30)..."
+            sleep 5
+          done
+          echo "health check failed"
+          docker compose -f docker-compose.yml logs iobuild-api
+          docker compose -f docker-compose.yml logs nginx
+          exit 1
+
+      - name: Curl health endpoint
+        run: |
+          curl -f http://localhost:80/health
+          curl -f http://localhost:80/api/v1/cutover/status || true
+
+      - name: Compose down
+        if: always()
+        run: docker compose -f docker-compose.yml down -v
+
+  simulator-smoke:
+    runs-on: ubuntu-latest
+    if: false # placeholder — simulator harness is profile-gated; run locally with --profile telemetry
+    steps:
+      - run: echo "simulator smoke via --profile telemetry"

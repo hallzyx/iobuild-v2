@@ -1,0 +1,156 @@
+# IoBuild Monolith — Final Compose (promoted from docker-compose.cutover.yml)
+# One backend (iobuild-api) + one frontend + one MySQL. No YARP gateway, no RabbitMQ, no Redis.
+# Optional integrations (jaeger/influx/mosquitto/simulator) are profile-gated; core stack runs without them.
+
+services:
+  iobuild-api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: iobuild-api
+    restart: unless-stopped
+    environment:
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__IoBuild=Server=mysql-monolith;Port=3306;Database=iobuild;User=root;Password=iobuild
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317
+      - Migrations__ApplyOnStartup=true
+    depends_on:
+      mysql-monolith:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
+    networks:
+      - iobuild-network
+    expose:
+      - "8080"
+
+  mysql-monolith:
+    image: mysql:8.0
+    container_name: iobuild-mysql-monolith
+    restart: unless-stopped
+    environment:
+      - MYSQL_ROOT_PASSWORD=iobuild
+      - MYSQL_DATABASE=iobuild
+    volumes:
+      - mysql_monolith_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - iobuild-network
+
+  # Frontend — Vue SPA built via Vite (nginx serves dist)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: iobuild-frontend
+    restart: unless-stopped
+    depends_on:
+      - iobuild-api
+    networks:
+      - iobuild-network
+    expose:
+      - "80"
+
+  nginx:
+    image: nginx:alpine
+    container_name: iobuild-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - iobuild-api
+      - frontend
+    networks:
+      - iobuild-network
+
+  # Jaeger — optional OTLP collector; app starts healthy when absent
+  jaeger:
+    image: jaegertracing/all-in-one:1.62
+    container_name: iobuild-jaeger
+    restart: unless-stopped
+    ports:
+      - "16686:16686"
+      - "4317:4317"
+      - "4318:4318"
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    networks:
+      - iobuild-network
+    profiles:
+      - observability
+      - full
+
+  # InfluxDB — optional telemetry sink (profile-gated)
+  influxdb:
+    image: influxdb:2.7-alpine
+    container_name: iobuild-influxdb
+    restart: unless-stopped
+    environment:
+      - DOCKER_INFLUXDB_INIT_MODE=setup
+      - DOCKER_INFLUXDB_INIT_USERNAME=admin
+      - DOCKER_INFLUXDB_INIT_PASSWORD=admin123
+      - DOCKER_INFLUXDB_INIT_ORG=iobuild
+      - DOCKER_INFLUXDB_INIT_BUCKET=iobuild-telemetry
+      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=iobuild-telemetry-token
+    volumes:
+      - influxdb_data:/var/lib/influxdb2
+    healthcheck:
+      test: ["CMD", "influx", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - iobuild-network
+    profiles:
+      - telemetry
+      - full
+
+  # Mosquitto — optional MQTT broker (profile-gated)
+  mosquitto:
+    image: eclipse-mosquitto:2-openssl
+    container_name: iobuild-mosquitto
+    restart: unless-stopped
+    volumes:
+      - mosquitto_data:/mosquitto/data
+    networks:
+      - iobuild-network
+    profiles:
+      - telemetry
+      - full
+
+  # Simulator — optional IoT telemetry generator (profile-gated, no build required)
+  simulator:
+    image: python:3.11-alpine
+    container_name: iobuild-simulator
+    restart: unless-stopped
+    command: ["sh", "-c", "echo 'simulator placeholder — enable with --profile telemetry' && sleep infinity"]
+    depends_on:
+      - mosquitto
+    networks:
+      - iobuild-network
+    profiles:
+      - telemetry
+      - full
+
+networks:
+  iobuild-network:
+    driver: bridge
+
+volumes:
+  mysql_monolith_data:
+    driver: local
+  influxdb_data:
+    driver: local
+  mosquitto_data:
+    driver: local
