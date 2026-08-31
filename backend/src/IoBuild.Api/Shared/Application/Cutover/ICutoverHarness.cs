@@ -1,6 +1,6 @@
 using System.Security.Claims;
 
-namespace IoBuild.Api.Cutover;
+namespace IoBuild.Api.Shared.Application.Cutover;
 
 public interface ICutoverHarness
 {
