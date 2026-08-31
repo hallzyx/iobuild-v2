@@ -1,4 +1,4 @@
-namespace IoBuild.Api.Cutover;
+namespace IoBuild.Api.Shared.Application.Cutover;
 
 public sealed class CutoverCheckpoint
 {

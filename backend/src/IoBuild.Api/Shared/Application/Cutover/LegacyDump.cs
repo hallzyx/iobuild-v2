@@ -1,4 +1,4 @@
-namespace IoBuild.Api.Cutover;
+namespace IoBuild.Api.Shared.Application.Cutover;
 
 public sealed record LegacyIamUser(int Id, string Email, string PasswordHash, string Role, DateTime UpdatedAt);
 public sealed record LegacyProject(int Id, string Name, string Description, string Location, int BuilderId, int TotalUnits, DateTime CreatedAt, DateTime UpdatedAt);

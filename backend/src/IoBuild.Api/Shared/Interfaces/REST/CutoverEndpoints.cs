@@ -1,6 +1,6 @@
-using IoBuild.Api.Cutover;
+using IoBuild.Api.Shared.Application.Cutover;
 
-namespace IoBuild.Api.Cutover.Interfaces.REST;
+namespace IoBuild.Api.Shared.Interfaces.REST;
 
 public static class CutoverEndpoints
 {

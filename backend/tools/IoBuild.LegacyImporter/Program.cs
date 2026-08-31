@@ -1,5 +1,5 @@
 using IoBuild.Api.Analytics;
-using IoBuild.Api.Cutover;
+using IoBuild.Api.Shared.Application.Cutover;
 using IoBuild.Api.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -42,11 +42,11 @@ if (legacyPath is not null && File.Exists(legacyPath))
         {
             var dump = new LegacyCutoverDump
             {
-                IamUsers = cutover.IamUsers.Select(u => new IoBuild.Api.Cutover.LegacyIamUser(u.Id, u.Email, u.PasswordHash, u.Role, u.UpdatedAt)).ToList(),
-                Projects = cutover.Projects.Select(p => new IoBuild.Api.Cutover.LegacyProject(p.ProjectId, p.Name, p.Description, p.Location, p.BuilderId, p.TotalUnits, p.CreatedAt, p.UpdatedAt)).ToList(),
-                Profiles = cutover.Profiles.Select(p => new IoBuild.Api.Cutover.LegacyProfile(p.Id, p.UserId, p.Name, p.Username, p.UpdatedAt)).ToList(),
-                Subscriptions = cutover.Subscriptions.Select(s => new IoBuild.Api.Cutover.LegacySubscription(s.Id, s.BuilderId, s.PlanId, s.Status, s.UpdatedAt)).ToList(),
-                Devices = cutover.Devices.Select(d => new IoBuild.Api.Cutover.LegacyDevice(d.Id, d.Name, d.Type, d.Location, d.ProjectId, d.UnitId, d.OwnerId, d.Status, d.UpdatedAt, d.MacAddress)).ToList()
+                IamUsers = cutover.IamUsers.Select(u => new IoBuild.Api.Shared.Application.Cutover.LegacyIamUser(u.Id, u.Email, u.PasswordHash, u.Role, u.UpdatedAt)).ToList(),
+                Projects = cutover.Projects.Select(p => new IoBuild.Api.Shared.Application.Cutover.LegacyProject(p.ProjectId, p.Name, p.Description, p.Location, p.BuilderId, p.TotalUnits, p.CreatedAt, p.UpdatedAt)).ToList(),
+                Profiles = cutover.Profiles.Select(p => new IoBuild.Api.Shared.Application.Cutover.LegacyProfile(p.Id, p.UserId, p.Name, p.Username, p.UpdatedAt)).ToList(),
+                Subscriptions = cutover.Subscriptions.Select(s => new IoBuild.Api.Shared.Application.Cutover.LegacySubscription(s.Id, s.BuilderId, s.PlanId, s.Status, s.UpdatedAt)).ToList(),
+                Devices = cutover.Devices.Select(d => new IoBuild.Api.Shared.Application.Cutover.LegacyDevice(d.Id, d.Name, d.Type, d.Location, d.ProjectId, d.UnitId, d.OwnerId, d.Status, d.UpdatedAt, d.MacAddress)).ToList()
             };
             var before = (await db.IamUsers.CountAsync(), await db.Projects.CountAsync(), await db.Profiles.CountAsync(), await db.Subscriptions.CountAsync(), await db.Devices.CountAsync());
             var result = await harness.ImportAsync(dump);
