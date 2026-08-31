@@ -21,6 +21,10 @@
     "details-title": "Project Details",
     "delete-header": "Delete Project",
     "confirm-delete": "Are you sure you want to delete project '{name}'?",
+    "unitStatus": {
+      "vacant": "Vacant",
+      "unassigned": "Unassigned"
+    },
     "fields": {
       "name": "Project Name",
       "name-placeholder": "Enter project name",

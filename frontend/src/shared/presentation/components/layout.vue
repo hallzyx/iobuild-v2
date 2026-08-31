@@ -6,6 +6,8 @@ import LanguageSwitcher from "./language-switcher.vue";
 import { useProfileStore } from "../../../profiles/application/profile.store.js";
 import { useIamStore } from "../../../iam/application/iam.store.js";
 import { useSubscriptionStore } from "../../../subscriptions/application/subscription.store.js";
+import { ROUTES } from "../../infrastructure/paths.js";
+import { isActiveStatus } from "../../../subscriptions/domain/model/subscription-status.enum.js";
 
 const { t } = useI18n();
 const router = useRouter();
@@ -21,7 +23,7 @@ const toggleDrawer = () => {
 
 const currentUser = computed(() => iamStore.currentUser);
 const userRole = computed(() => currentUser.value?.role?.toLowerCase() || 'builder');
-const hasActiveSubscription = computed(() => subscriptionStore.currentSubscription?.status?.toLowerCase() === 'active');
+const hasActiveSubscription = computed(() => isActiveStatus(subscriptionStore.currentSubscription?.status));
 
 
 onMounted(async () => {
@@ -62,21 +64,21 @@ const userPhoto = computed(() => {
 
 const handleLogout = () => {
   iamStore.signOut();
-  router.push('/login');
+  router.push(ROUTES.LOGIN);
 };
 
 const items = [
 
-  { label: 'option.home', to: '/analytics/dashboard', use_role: 'builder', type: 'builder', icon: 'pi pi-home' },
-  { label: 'option.profile', to: '/profiles/profile', use_role: 'builder', type: 'builder', icon: 'pi pi-user' },
-  { label: 'option.projects', to: '/projects', use_role: 'builder', type: 'builder', icon: 'pi pi-folder', requiresSubscription: true },
-  { label: 'option.clients', to: '/clients', use_role: 'builder', type: 'builder', icon: 'pi pi-users', requiresSubscription: true },
-  { label: 'option.subscription', to: '/subscriptions/my-subscription', use_role: 'builder', type: 'builder', icon: 'pi pi-credit-card' },
+  { label: 'option.home', to: ROUTES.ANALYTICS_DASHBOARD, use_role: 'builder', type: 'builder', icon: 'pi pi-home' },
+  { label: 'option.profile', to: ROUTES.PROFILES, use_role: 'builder', type: 'builder', icon: 'pi pi-user' },
+  { label: 'option.projects', to: ROUTES.PROJECTS, use_role: 'builder', type: 'builder', icon: 'pi pi-folder', requiresSubscription: true },
+  { label: 'option.clients', to: ROUTES.CLIENTS, use_role: 'builder', type: 'builder', icon: 'pi pi-users', requiresSubscription: true },
+  { label: 'option.subscription', to: ROUTES.SUBSCRIPTION_DETAIL, use_role: 'builder', type: 'builder', icon: 'pi pi-credit-card' },
 
 
-  { label: 'option.home', to: '/analytics/dashboard', use_role: 'owner', type: 'owner', icon: 'pi pi-home' },
-  { label: 'option.profile', to: '/profiles/profile', use_role: 'owner', type: 'owner', icon: 'pi pi-user' },
-  { label: 'option.device-management', to: '/devices/device-management', use_role: 'owner', type: 'owner', icon: 'pi pi-microchip' },
+  { label: 'option.home', to: ROUTES.ANALYTICS_DASHBOARD, use_role: 'owner', type: 'owner', icon: 'pi pi-home' },
+  { label: 'option.profile', to: ROUTES.PROFILES, use_role: 'owner', type: 'owner', icon: 'pi pi-user' },
+  { label: 'option.device-management', to: ROUTES.DEVICES, use_role: 'owner', type: 'owner', icon: 'pi pi-microchip' },
 ];
 
 const filteredItems = computed(() => {
@@ -104,7 +106,7 @@ const filteredItems = computed(() => {
                 text
                 rounded
                 @click="toggleDrawer"
-            />            <router-link to="/analytics/dashboard" class="logo-link">
+            />            <router-link :to="ROUTES.ANALYTICS_DASHBOARD" class="logo-link">
               <img
                 src="/IoBuild-Logo.png"
                 alt="IoBuild Logo"
@@ -133,7 +135,7 @@ const filteredItems = computed(() => {
 
 
             <router-link
-              to="/profiles/profile"
+              :to="ROUTES.PROFILES"
               class="user-info-link"
               @click="drawer = false"
             >

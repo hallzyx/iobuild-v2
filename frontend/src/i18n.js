@@ -1,8 +1,9 @@
 import { createI18n } from "vue-i18n"
 import en from "./locales/en.json"
 import es from "./locales/es.json"
+import { LANG_KEY } from "./shared/infrastructure/storage-keys.js"
 
-const savedLang = localStorage.getItem("lang") || "en"
+const savedLang = localStorage.getItem(LANG_KEY) || "en"
 
 const i18n = createI18n({
   legacy: false,

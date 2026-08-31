@@ -1,6 +1,7 @@
 <script setup>
 import { computed, reactive, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { DeviceStatus } from '../../domain/model/device-status.enum.js';
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
@@ -11,7 +12,7 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue', 'save', 'cancel']);
 const { t } = useI18n();
 
-const form = reactive({ id: null, name: '', type: '', location: '', projectId: null, status: 'Online', macAddress: '' });
+const form = reactive({ id: null, name: '', type: '', location: '', projectId: null, status: DeviceStatus.ONLINE, macAddress: '' });
 
 const typeOptions = [
   { label: t('devices.types.temperature'), value: 'temperature' },
@@ -25,8 +26,8 @@ const typeOptions = [
 ];
 
 const statusOptions = [
-  { label: t('devices.status.online'), value: 'Online' },
-  { label: t('devices.status.offline'), value: 'Offline' }
+  { label: t('devices.status.online'), value: DeviceStatus.ONLINE },
+  { label: t('devices.status.offline'), value: DeviceStatus.OFFLINE }
 ];
 
 watch(() => props.device, (d) => {
@@ -36,7 +37,7 @@ watch(() => props.device, (d) => {
     form.type = d.type;
     form.location = d.location;
     form.projectId = d.projectId;
-    form.status = d.status || 'Online';
+    form.status = d.status || DeviceStatus.ONLINE;
     form.macAddress = d.macAddress || '';
   }
 }, { immediate: true });
@@ -48,7 +49,7 @@ watch(() => props.modelValue, (isVisible) => {
     form.type = '';
     form.location = '';
     form.projectId = null;
-    form.status = 'Online';
+    form.status = DeviceStatus.ONLINE;
     form.macAddress = '';
   }
 });

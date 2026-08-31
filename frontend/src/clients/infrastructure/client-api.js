@@ -1,7 +1,7 @@
 import { BaseApi } from "../../shared/infrastructure/base-api.js";
 import { BaseEndpoint } from "../../shared/infrastructure/base-endpoint.js";
 
-const clientsEndpointPath = import.meta.env.VITE_CLIENTS_ENDPOINT_PATH || '/external_clients';
+const clientsEndpointPath = import.meta.env.VITE_CLIENTS_ENDPOINT_PATH;
 
 export class ClientApi extends BaseApi {
     #clientsEndpoint;

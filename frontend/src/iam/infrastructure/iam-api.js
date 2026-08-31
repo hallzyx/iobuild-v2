@@ -1,6 +1,7 @@
 import { BaseApi } from "../../shared/infrastructure/base-api.js";
 
 const usersEndpoint = import.meta.env.VITE_USERS_ENDPOINT_PATH;
+const sessionsEndpoint = import.meta.env.VITE_IAM_SESSIONS_PATH || import.meta.env.VITE_AUTH_ENDPOINT_PATH || '/sessions';
 
 /**
  * IAM API class to interact with authentication endpoints
@@ -18,7 +19,7 @@ export class IamApi extends BaseApi {
      * @returns {Promise} Response with authenticated user and token
      */
     signIn(signInResource) {
-        return this.http.post(`/sessions`, signInResource);
+        return this.http.post(sessionsEndpoint, signInResource);
     }
 
     /**

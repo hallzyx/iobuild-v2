@@ -18,9 +18,15 @@ coverage.*
 .env
 .env.*
 !.env.example
+!.env.production
 appsettings.Local.json
 appsettings.*.Local.json
 secrets.json
+
+# Frontend
+frontend/dist/
+frontend/node_modules/
+node_modules/
 
 # Operating system files
 .DS_Store

@@ -8,6 +8,7 @@ import { useProfileStore } from "../../profiles/application/profile.store.js";
 import { Profile } from "../../profiles/domain/model/profile.entity.js";
 import { useSubscriptionStore } from "../../subscriptions/application/subscription.store.js";
 import { useAnalyticsStore } from "../../analytics/application/analytics.store.js";
+import { TOKEN_KEY, CURRENT_USER_KEY } from "../../shared/infrastructure/storage-keys.js";
 
 const profileApi = new ProfileApi();
 
@@ -16,9 +17,9 @@ const iamApi = new IamApi();
 export const useIamStore = defineStore('iam', () => {
     // State
     const currentUser = ref(null);
-    const token = ref(localStorage.getItem('token') || '');
+    const token = ref(localStorage.getItem(TOKEN_KEY) || '');
     const users = ref([]);
-    const isAuthenticated = ref(!!localStorage.getItem('token'));
+    const isAuthenticated = ref(!!localStorage.getItem(TOKEN_KEY));
     const errors = ref([]);
 
     // Computed
@@ -62,8 +63,8 @@ export const useIamStore = defineStore('iam', () => {
             isAuthenticated.value = true;
 
             // Save to localStorage
-            localStorage.setItem('token', authenticatedUser.token);
-            localStorage.setItem('currentUser', JSON.stringify(currentUser.value));
+            localStorage.setItem(TOKEN_KEY, authenticatedUser.token);
+            localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(currentUser.value));
 
             // Try to fetch profile immediately to populate username/name/photoUrl
             try {
@@ -109,8 +110,8 @@ export const useIamStore = defineStore('iam', () => {
         currentUser.value = null;
         token.value = '';
         isAuthenticated.value = false;
-        localStorage.removeItem('token');
-        localStorage.removeItem('currentUser');
+        localStorage.removeItem(TOKEN_KEY);
+        localStorage.removeItem(CURRENT_USER_KEY);
         clearAllUserStores();
     }
 
@@ -118,8 +119,8 @@ export const useIamStore = defineStore('iam', () => {
      * Load user from localStorage
      */
     function loadUserFromStorage() {
-        const storedUser = localStorage.getItem('currentUser');
-        const storedToken = localStorage.getItem('token');
+        const storedUser = localStorage.getItem(CURRENT_USER_KEY);
+        const storedToken = localStorage.getItem(TOKEN_KEY);
 
         if (storedUser && storedToken) {
             currentUser.value = JSON.parse(storedUser);
@@ -140,7 +141,7 @@ export const useIamStore = defineStore('iam', () => {
                 name: profileData.name,
                 photoUrl: profileData.photoUrl
             };
-            localStorage.setItem('currentUser', JSON.stringify(currentUser.value));
+            localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(currentUser.value));
         }
     }
 

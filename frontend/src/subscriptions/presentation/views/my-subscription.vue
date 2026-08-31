@@ -10,6 +10,7 @@ import PlanCard from "../components/plan-card.vue";
 import CurrentPlanCard from "../components/current-plan-card.vue";
 import PreviousInvoicesModal from "../components/previous-invoices-modal.vue";
 import { SubscriptionApi } from "../../infrastructure/subscription-api.js";
+import { TOAST_SUCCESS_DURATION_MS, TOAST_ERROR_DURATION_MS, TOAST_INVOICE_ERROR_DURATION_MS, TOAST_AUTH_ERROR_DURATION_MS } from "../../../shared/infrastructure/constants.js";
 
 // Stripe
 import { loadStripe } from "@stripe/stripe-js";
@@ -51,7 +52,7 @@ const openInvoicesDialog = async () => {
       severity: 'error',
       summary: 'Error',
       detail: 'Could not load invoices.',
-      life: 4000
+      life: TOAST_INVOICE_ERROR_DURATION_MS
     });
   } finally {
     invoicesLoading.value = false;
@@ -68,7 +69,7 @@ const getBuilderId = () => {
       severity: "error",
       summary: "Error de autenticación",
       detail: error.message,
-      life: 5000
+      life: TOAST_AUTH_ERROR_DURATION_MS
     });
     throw error;
   }
@@ -96,7 +97,7 @@ onMounted(async () => {
         severity: "success",
         summary: t("subscriptions.success"),
         detail: t("subscriptions.payment-success") || "Pago realizado exitosamente",
-        life: 5000
+        life: TOAST_AUTH_ERROR_DURATION_MS
       });
 
       // Refrescar subscription
@@ -107,7 +108,7 @@ onMounted(async () => {
         severity: "warn",
         summary: t("subscriptions.warning") || "Advertencia",
         detail: "El pago fue procesado pero hubo un problema al actualizar. Recarga la página.",
-        life: 5000
+        life: TOAST_AUTH_ERROR_DURATION_MS
       });
     } finally {
       // Limpiar los parámetros de la URL sin recargar la página
@@ -134,14 +135,14 @@ const handleCancelPlan = () => {
           severity: "success",
           summary: t("subscriptions.success"),
           detail: t("subscriptions.cancelled-successfully"),
-          life: 3000,
+          life: TOAST_ERROR_DURATION_MS,
         });
       } catch (error) {
         toast.add({
           severity: "error",
           summary: t("subscriptions.error"),
           detail: t("subscriptions.cancel-failed"),
-          life: 3000,
+          life: TOAST_ERROR_DURATION_MS,
         });
       }
     },
@@ -184,7 +185,7 @@ const handlePayPlan = async (plan) => {
           severity: "error",
           summary: t("subscriptions.error"),
           detail: 'No se pudo redirigir al pago. Inténtalo nuevamente.',
-          life: 3000
+          life: TOAST_ERROR_DURATION_MS
         });
       }
       return;
@@ -198,7 +199,7 @@ const handlePayPlan = async (plan) => {
       severity: "error",
       summary: t("subscriptions.error"),
       detail: message,
-      life: 3000
+      life: TOAST_ERROR_DURATION_MS
     });
   } finally {
     isProcessing.value = false;

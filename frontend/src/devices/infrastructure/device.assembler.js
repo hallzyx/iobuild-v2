@@ -1,9 +1,10 @@
 import { Device } from '../domain/model/device.entity.js';
+import { DeviceStatus } from '../domain/model/device-status.enum.js';
 
 export class DeviceAssembler {
   static toEntity(deviceData) {
-    const statuses = ['Online', 'Offline'];
-    const status = deviceData.status && (deviceData.status === 'Online' || deviceData.status === 'Offline')
+    const statuses = [DeviceStatus.ONLINE, DeviceStatus.OFFLINE];
+    const status = deviceData.status && (deviceData.status === DeviceStatus.ONLINE || deviceData.status === DeviceStatus.OFFLINE)
       ? deviceData.status
       : statuses[Math.floor(Math.random() * statuses.length)];
 

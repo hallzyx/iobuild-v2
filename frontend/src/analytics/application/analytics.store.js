@@ -2,6 +2,7 @@ import { defineStore } from "pinia";
 import { ref } from "vue";
 import { AnalyticsApi } from "../infrastructure/analytics-api.js";
 import { DeviceApi } from "@/devices/infrastructure/device-api.js";
+import { ANALYTICS_DEFAULT_MINUTES, POLLING_INTERVAL_MS } from "@/shared/infrastructure/constants.js";
 
 const analyticsApi = new AnalyticsApi();
 const deviceApi = new DeviceApi();
@@ -105,7 +106,7 @@ export const useAnalyticsStore = defineStore("analytics", () => {
         }
     }
 
-    async function fetchLiveEnergy(userId, role, minutes = 10) {
+    async function fetchLiveEnergy(userId, role, minutes = ANALYTICS_DEFAULT_MINUTES) {
         liveEnergyLoading.value = true;
         try {
             liveEnergyData.value = await analyticsApi.getLiveEnergy(userId, role, minutes);
@@ -116,9 +117,9 @@ export const useAnalyticsStore = defineStore("analytics", () => {
         }
     }
 
-    function startLiveEnergyPolling(userId, role, minutes = 10) {
+    function startLiveEnergyPolling(userId, role, minutes = ANALYTICS_DEFAULT_MINUTES) {
         fetchLiveEnergy(userId, role, minutes);
-        _liveEnergyInterval = setInterval(() => fetchLiveEnergy(userId, role, minutes), 30000);
+        _liveEnergyInterval = setInterval(() => fetchLiveEnergy(userId, role, minutes), POLLING_INTERVAL_MS);
     }
 
     function stopLiveEnergyPolling() {

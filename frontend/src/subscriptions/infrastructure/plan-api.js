@@ -1,7 +1,7 @@
 import { BaseApi } from "../../shared/infrastructure/base-api.js";
 import { BaseEndpoint } from "../../shared/infrastructure/base-endpoint.js";
 
-const plansEndpointPath = '/plans';
+const plansEndpointPath = import.meta.env.VITE_PLANS_ENDPOINT_PATH;
 
 export class PlanApi extends BaseApi {
     #plansEndpoint;

@@ -2,7 +2,7 @@ import { BaseApi } from "../../shared/infrastructure/base-api.js";
 import { BaseEndpoint } from "../../shared/infrastructure/base-endpoint.js";
 
 const projectsEndpointPath = import.meta.env.VITE_PROJECTS_ENDPOINT_PATH;
-const unitsEndpointPath = import.meta.env.VITE_UNITS_ENDPOINT_PATH || '/units';
+const unitsEndpointPath = import.meta.env.VITE_UNITS_ENDPOINT_PATH;
 
 export class ProjectApi extends BaseApi {
     #projectsEndpoint;

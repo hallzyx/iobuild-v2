@@ -31,6 +31,8 @@ onMounted(() => {
   loadCloudinaryScript();
 });
 
+import { CLOUDINARY_WIDGET_URL } from "../../../shared/infrastructure/constants.js";
+
 const cloudinaryName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
 const cloudinaryPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
 const cloudinaryReady = ref(false);
@@ -41,7 +43,7 @@ const loadCloudinaryScript = () => {
     return;
   }
   const script = document.createElement('script');
-  script.src = 'https://widget.cloudinary.com/v2.0/global/all.js';
+  script.src = CLOUDINARY_WIDGET_URL;
   script.type = 'text/javascript';
   script.onload = () => { cloudinaryReady.value = true; };
   document.head.appendChild(script);

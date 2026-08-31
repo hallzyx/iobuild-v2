@@ -2,6 +2,7 @@
 import { reactive, computed, ref, watch, onMounted } from 'vue';
 import { useAnalyticsStore } from '../../../analytics/application/analytics.store.js';
 import { DeviceApi } from '../../infrastructure/device-api.js';
+import { DeviceStatus } from '../../domain/model/device-status.enum.js';
 
 /**
  * Dialog for adding a catalog device to an owner's unit (Slice 3 — catalog picker).
@@ -136,7 +137,7 @@ async function onSubmit() {
       type: form.selectedTypeCode,
       location: `Unit ${form.selectedUnitId}`,
       projectId,
-      status: 'active',
+      status: DeviceStatus.ACTIVE,
       unitId: form.selectedUnitId,
     });
 

@@ -11,6 +11,8 @@ import MyUnitDevices from '../components/my-unit-devices.vue';
 import AddCustomDeviceDialog from '../components/AddCustomDeviceDialog.vue';
 import { useToast } from 'primevue/usetoast';
 import { useConfirm } from 'primevue/useconfirm';
+import { DeviceStatus } from '../../domain/model/device-status.enum.js';
+import { TOAST_SUCCESS_DURATION_MS, TOAST_ERROR_DURATION_MS, RETRY_DEVICE_CONFIRM_INTERVAL_MS, RETRY_DEVICE_CONFIRM_ATTEMPTS } from '../../../shared/infrastructure/constants.js';
 
 const { t } = useI18n();
 const deviceStore = useDeviceStore();
@@ -43,7 +45,7 @@ const handleCustomDeviceCreated = async (newDevice) => {
     severity: 'success',
     summary: 'Device added',
     detail: `Device "${newDevice?.name ?? ''}" added successfully.`,
-    life: 3000,
+    life: TOAST_ERROR_DURATION_MS,
   });
 
   // Optimistic update: inject the new device into the store immediately so
@@ -58,7 +60,7 @@ const handleCustomDeviceCreated = async (newDevice) => {
           deviceId: newDevice.id,
           deviceName: newDevice.name,
           type: newDevice.type,
-          status: 'active',
+          status: DeviceStatus.ACTIVE,
           lastOnline: null,
         },
       ];
@@ -77,10 +79,10 @@ const handleCustomDeviceCreated = async (newDevice) => {
   const isConfirmed = () =>
     targetId > 0 &&
     (analyticsStore.ownerDashboard?.deviceHealthStatus ?? [])
-      .some((d) => Number(d.deviceId) === targetId && d.status !== 'active');
+      .some((d) => Number(d.deviceId) === targetId && d.status !== DeviceStatus.ACTIVE);
 
-  for (let attempt = 0; attempt < 12; attempt++) {
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+  for (let attempt = 0; attempt < RETRY_DEVICE_CONFIRM_ATTEMPTS; attempt++) {
+    await new Promise((resolve) => setTimeout(resolve, RETRY_DEVICE_CONFIRM_INTERVAL_MS));
     await analyticsStore.fetchOwnerDashboard(ownerId);
     if (isConfirmed()) break;
   }
@@ -88,7 +90,7 @@ const handleCustomDeviceCreated = async (newDevice) => {
 
 const addDevice = () => {
   isNewDialog.value = true;
-  editingDevice.value = { id: null, name: '', type: '', location: '', status: 'Online', projectId: null, macAddress: '' };
+  editingDevice.value = { id: null, name: '', type: '', location: '', status: DeviceStatus.ONLINE, projectId: null, macAddress: '' };
   showEditDialog.value = true;
 };
 
@@ -115,7 +117,7 @@ const handleDeleteDevice = (device) => {
           toast.add({
             severity: 'success',
             summary: t('devices.messages.deleteSuccess'),
-            life: 2500
+            life: TOAST_SUCCESS_DURATION_MS
           });
         } else {
           throw new Error('delete-failed');
@@ -124,7 +126,7 @@ const handleDeleteDevice = (device) => {
         toast.add({
           severity: 'error',
           summary: t('devices.messages.deleteError'),
-          life: 3000
+          life: TOAST_ERROR_DURATION_MS
         });
       }
     }
@@ -134,20 +136,21 @@ const handleDeleteDevice = (device) => {
 const handleSave = async (payload) => {
   try {
     if (isNewDialog.value || !payload.id) {
+      if (payload.projectId == null) throw new Error('projectId is required');
       const created = await deviceStore.createDevice({
         name: payload.name,
         type: payload.type,
         location: payload.location,
         status: payload.status,
-        projectId: payload.projectId || 1,
+        projectId: payload.projectId,
         macAddress: payload.macAddress || ''
       });
       if (!created) throw new Error('create-failed');
-      toast.add({ severity: 'success', summary: t('devices.messages.createSuccess'), life: 2500 });
+      toast.add({ severity: 'success', summary: t('devices.messages.createSuccess'), life: TOAST_SUCCESS_DURATION_MS });
     } else {
       const updated = await deviceStore.updateDevice(payload);
       if (!updated) throw new Error('update-failed');
-      toast.add({ severity: 'success', summary: t('devices.messages.updateSuccess'), life: 2500 });
+      toast.add({ severity: 'success', summary: t('devices.messages.updateSuccess'), life: TOAST_SUCCESS_DURATION_MS });
     }
     // Cerrar el diálogo y limpiar el estado
     showEditDialog.value = false;
@@ -155,7 +158,7 @@ const handleSave = async (payload) => {
     isNewDialog.value = false;
   } catch (e) {
     const key = isNewDialog.value ? 'devices.messages.createError' : 'devices.messages.updateError';
-    toast.add({ severity: 'error', summary: t(key), life: 3000 });
+    toast.add({ severity: 'error', summary: t(key), life: TOAST_ERROR_DURATION_MS });
   }
 };
 

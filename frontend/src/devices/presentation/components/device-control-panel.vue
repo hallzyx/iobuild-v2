@@ -3,6 +3,7 @@ import { ref, computed, watch, onMounted } from 'vue';
 import { useCommandStore } from '../../application/command.store.js';
 import { DeviceApi } from '../../infrastructure/device-api.js';
 import { useToast } from 'primevue/usetoast';
+import { TOAST_SUCCESS_DURATION_MS, TOAST_AUTH_ERROR_DURATION_MS } from '../../../shared/infrastructure/constants.js';
 
 const props = defineProps({
   /**
@@ -118,14 +119,14 @@ async function onSend(attr) {
       severity: 'success',
       summary: 'Command sent',
       detail: `${attr.name} set to ${value}${attr.unit ? ' ' + attr.unit : ''}`,
-      life: 3000,
+      life: TOAST_SUCCESS_DURATION_MS,
     });
   } else {
     toast.add({
       severity: result.status === 403 ? 'warn' : 'error',
       summary: result.status === 403 ? 'Permission denied' : 'Command failed',
       detail: result.message,
-      life: 5000,
+      life: TOAST_AUTH_ERROR_DURATION_MS,
     });
   }
 }

@@ -4,6 +4,7 @@ import { useAnalyticsStore } from '../../application/analytics.store.js';
 import { useIamStore } from '../../../iam/application/iam.store.js';
 import BuilderDashboard from '../components/builder-dashboard.component.vue';
 import OwnerDashboard from '../components/owner-dashboard.component.vue';
+import { RETRY_DELAY_SHORT_MS, RETRY_DELAY_LONG_MS, RETRY_OWNER_DASHBOARD_MAX_ATTEMPTS } from '../../../shared/infrastructure/constants.js';
 
 const analyticsStore = useAnalyticsStore();
 const iamStore = useIamStore();
@@ -28,14 +29,14 @@ async function loadDashboard() {
       retryTimer = setTimeout(async () => {
         retryTimer = null;
         await analyticsStore.fetchBuilderDashboard(userId.value);
-      }, 2500);
+      }, RETRY_DELAY_LONG_MS);
     }
   } else if (userRole.value === 'owner') {
     await analyticsStore.fetchOwnerDashboard(userId.value);
 
     // Retry until myUnitsCount > 0 to handle Analytics read-model propagation lag.
     // Up to 4 attempts at 1.5 s intervals (~6 s total).
-    let ownerRetries = 4;
+    let ownerRetries = RETRY_OWNER_DASHBOARD_MAX_ATTEMPTS;
     const scheduleOwnerRetry = () => {
       if (ownerRetries-- <= 0) return;
       retryTimer = setTimeout(async () => {
@@ -44,7 +45,7 @@ async function loadDashboard() {
         if ((analyticsStore.ownerDashboard?.myUnitsCount ?? 1) === 0) {
           scheduleOwnerRetry();
         }
-      }, 1500);
+      }, RETRY_DELAY_SHORT_MS);
     };
     const ownerDash = analyticsStore.ownerDashboard;
     if (ownerDash && ownerDash.myUnitsCount === 0) {
