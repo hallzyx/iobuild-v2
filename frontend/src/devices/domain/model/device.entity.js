@@ -1,5 +1,7 @@
+import { DeviceStatus } from "./device-status.enum.js";
+
 export class Device {
-  constructor(id=null, name="", type="", location="", projectId=1, status = "", macAddress="") {
+  constructor(id=null, name="", type="", location="", projectId=null, status = "", macAddress="") {
     this.id = id;
     this.name = name;
     this.type = type; // canonical code (e.g., temperature, energy)
@@ -10,10 +12,10 @@ export class Device {
   }
 
   isOnline() {
-    return this.status === 'Online';
+    return this.status === DeviceStatus.ONLINE;
   }
 
   toggleStatus() {
-    this.status = this.status === 'Online' ? 'Offline' : 'Online';
+    this.status = this.status === DeviceStatus.ONLINE ? DeviceStatus.OFFLINE : DeviceStatus.ONLINE;
   }
 }

@@ -6,6 +6,8 @@ import { useConfirm } from 'primevue/useconfirm';
 import { useToast } from 'primevue/usetoast';
 import { useI18n } from 'vue-i18n';
 import ClientEditDialog from '../components/client-edit-dialog.vue';
+import { TOAST_ERROR_DURATION_MS } from '../../../shared/infrastructure/constants.js';
+import { ClientStatus } from '../../domain/model/client-status.enum.js';
 
 const clientStore = useClientStore();
 const route = useRoute();
@@ -35,11 +37,11 @@ const goBack = () => {
 
 const getSeverity = (status) => {
   switch (status) {
-    case 'Active':
+    case ClientStatus.ACTIVE:
       return 'success';
-    case 'Stand by':
+    case ClientStatus.STAND_BY:
       return 'warn';
-    case 'Suspended':
+    case ClientStatus.SUSPENDED:
       return 'danger';
     default:
       return 'info';
@@ -49,9 +51,9 @@ const getSeverity = (status) => {
 // Función para traducir el estado
 const getStatusLabel = (status) => {
   const statusMap = {
-    'Active': 'active',
-    'Stand by': 'standBy',
-    'Suspended': 'suspended'
+    [ClientStatus.ACTIVE]: 'active',
+    [ClientStatus.STAND_BY]: 'standBy',
+    [ClientStatus.SUSPENDED]: 'suspended'
   };
   return t(`clients.status.${statusMap[status] || 'active'}`);
 };
@@ -67,14 +69,14 @@ const handleSaveEdit = async (updatedClient) => {
       severity: 'success',
       summary: t('clients.messages.updateSuccess'),
       detail: t('clients.messages.updateSuccess'),
-      life: 3000
+      life: TOAST_ERROR_DURATION_MS
     });
   } catch (error) {
     toast.add({
       severity: 'error',
       summary: t('clients.messages.updateError'),
       detail: t('clients.messages.updateError'),
-      life: 3000
+      life: TOAST_ERROR_DURATION_MS
     });
   }
 };
@@ -95,7 +97,7 @@ const handleDelete = () => {
           severity: 'success',
           summary: t('clients.messages.deleteSuccess'),
           detail: t('clients.messages.deleteSuccess'),
-          life: 3000
+          life: TOAST_ERROR_DURATION_MS
         });
         // Redirigir a la lista después de eliminar
         setTimeout(() => {
@@ -106,7 +108,7 @@ const handleDelete = () => {
           severity: 'error',
           summary: t('clients.messages.deleteError'),
           detail: t('clients.messages.deleteError'),
-          life: 3000
+          life: TOAST_ERROR_DURATION_MS
         });
       }
     }

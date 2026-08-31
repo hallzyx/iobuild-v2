@@ -2,6 +2,7 @@ import { BaseApi } from "../../shared/infrastructure/base-api.js";
 import { BuilderDashboardAssembler } from "./builder-dashboard.assembler.js";
 import { OwnerDashboardAssembler } from "./owner-dashboard.assembler.js";
 import { HistoricalDataAssembler } from "./historical-data.assembler.js";
+import { ANALYTICS_DEFAULT_MINUTES } from "../../shared/infrastructure/constants.js";
 
 const analyticsBasePath = import.meta.env.VITE_ANALYTICS_ENDPOINT_PATH;
 const devicesBasePath = import.meta.env.VITE_DEVICES_ENDPOINT_PATH;
@@ -127,7 +128,7 @@ export class AnalyticsApi extends BaseApi {
      * @param {number} [minutes=10] - Time window in minutes (1-60)
      * @returns {Promise<Array<{timestamp: string, totalEnergyKwh: number}>>}
      */
-    async getLiveEnergy(userId, role, minutes = 10) {
+    async getLiveEnergy(userId, role, minutes = ANALYTICS_DEFAULT_MINUTES) {
         const path = role === 'builder'
             ? `${analyticsBasePath}/builders/${userId}/energy`
             : `${analyticsBasePath}/owners/${userId}/energy`;

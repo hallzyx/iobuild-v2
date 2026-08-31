@@ -1,4 +1,4 @@
-const PROJECT_STATUS_LABELS = { 0: 'Planned', 1: 'On going', 2: 'On hold', 3: 'Completed', 4: 'Cancelled' };
+import { PROJECT_STATUS_LABELS } from "./project-status.enum.js";
 
 export class Project {
     constructor({

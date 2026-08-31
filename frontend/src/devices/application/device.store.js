@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
 import { DeviceApi } from '../infrastructure/device-api.js';
+import { DeviceStatus } from '../domain/model/device-status.enum.js';
 
 export const useDeviceStore = defineStore('device', {
   state: () => ({
@@ -98,7 +99,7 @@ export const useDeviceStore = defineStore('device', {
       this.error = null;
       try {
         const deviceApi = new DeviceApi();
-        const payload = { ...deviceData, status: 'active' };
+        const payload = { ...deviceData, status: DeviceStatus.ACTIVE };
         const newDevice = await deviceApi.createDevice(payload);
         await this.fetchDevices(); // Recargar la lista de dispositivos
         console.log('[DeviceStore] Device created and list refreshed:', newDevice);

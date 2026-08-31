@@ -2,6 +2,7 @@ import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import { ProjectApi } from "../infrastructure/project-api.js";
 import { ProjectAssembler } from "../infrastructure/project.assembler.js";
+import { CURRENT_USER_KEY } from "../../shared/infrastructure/storage-keys.js";
 
 const projectApi = new ProjectApi();
 
@@ -10,7 +11,7 @@ const projectApi = new ProjectApi();
 // callers can fail closed instead of falling back to another builder's data.
 function getCurrentBuilderId() {
     try {
-        const currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
+        const currentUser = JSON.parse(localStorage.getItem(CURRENT_USER_KEY) || 'null');
         return currentUser?.id ?? null;
     } catch (error) {
         console.error('[projects] could not read current user:', error);

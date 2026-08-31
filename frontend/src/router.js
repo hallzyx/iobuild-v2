@@ -7,6 +7,10 @@ import analyticsRoutes from "./analytics/presentation/analytics-routes.js";
 import { clientsRoutes } from "./clients/presentation/clients-routes.js";
 import iamRoutes from "./iam/presentation/iam-routes.js";
 import { SubscriptionApi } from "./subscriptions/infrastructure/subscription-api.js";
+import { TOKEN_KEY, CURRENT_USER_KEY } from "./shared/infrastructure/storage-keys.js";
+import { ROUTES } from "./shared/infrastructure/paths.js";
+import { RETRY_DELAY_SHORT_MS } from "./shared/infrastructure/constants.js";
+import { isActiveStatus } from "./subscriptions/domain/model/subscription-status.enum.js";
 
 const subscriptionApi = new SubscriptionApi();
 
@@ -15,10 +19,10 @@ const subscriptionApi = new SubscriptionApi();
 // on error so paid features stay gated).
 async function builderHasActiveSubscription() {
     try {
-        const currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
+        const currentUser = JSON.parse(localStorage.getItem(CURRENT_USER_KEY) || 'null');
         if (!currentUser?.id) return false;
         const { data } = await subscriptionApi.getSubscriptionByBuilderId(currentUser.id);
-        return !!data && String(data.status).toLowerCase() === 'active';
+        return !!data && isActiveStatus(data.status);
     } catch (error) {
         console.error('[subscription-gate] check failed:', error);
         return false;
@@ -62,12 +66,12 @@ const routes = [
     },
     {
         path: '/',
-        redirect: '/iam/login'
+        redirect: ROUTES.IAM_LOGIN
     },
     {
         path: '/home',
         name: 'home',
-        redirect: '/analytics/dashboard'
+        redirect: ROUTES.ANALYTICS_DASHBOARD
     },
 
     {
@@ -89,17 +93,17 @@ router.beforeEach(async (to, from, next) => {
 
     // Check if route requires authentication
     const isPublicRoute = to.meta?.public === true;
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem(TOKEN_KEY);
     const isAuthenticated = !!token;
 
     // If route is not public and user is not authenticated, redirect to login page
     if (!isPublicRoute && !isAuthenticated) {
-        next('/iam/login');
+        next(ROUTES.IAM_LOGIN);
         return;
     }
     // If user is authenticated and trying to access login, redirect to home
-    if (to.path === '/iam/login' && isAuthenticated) {
-        next('/home');
+    if (to.path === ROUTES.IAM_LOGIN && isAuthenticated) {
+        next(ROUTES.HOME);
         return;
     }
 
@@ -108,10 +112,10 @@ router.beforeEach(async (to, from, next) => {
     // section (and iam, to log in/out). Everything else redirects there, since
     // those features are part of what the subscription pays for.
     if (isAuthenticated) {
-        const currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
+        const currentUser = JSON.parse(localStorage.getItem(CURRENT_USER_KEY) || 'null');
         const isBuilder = String(currentUser?.role).toLowerCase() === 'builder';
-        const isAllowedWithoutSub = to.path.startsWith('/subscriptions')
-            || to.path.startsWith('/iam');
+        const isAllowedWithoutSub = to.path.startsWith(ROUTES.SUBSCRIPTIONS_BASE)
+            || to.path.startsWith(ROUTES.IAM_BASE);
 
         if (isBuilder && !isAllowedWithoutSub) {
             // Retry up to 2 times with a short delay to handle the race window
@@ -120,11 +124,11 @@ router.beforeEach(async (to, from, next) => {
             // checkout fails the gate before the webhook fires.
             let active = await builderHasActiveSubscription();
             if (!active) {
-                await new Promise((r) => setTimeout(r, 1500));
+                await new Promise((r) => setTimeout(r, RETRY_DELAY_SHORT_MS));
                 active = await builderHasActiveSubscription();
             }
             if (!active) {
-                next('/subscriptions/my-subscription');
+                next(ROUTES.SUBSCRIPTION_DETAIL);
                 return;
             }
         }
@@ -135,12 +139,12 @@ router.beforeEach(async (to, from, next) => {
     // Builders are redirected to the analytics dashboard; unauthenticated users
     // are already redirected to login above.
     if (to.meta?.requiresRole) {
-        const currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
+        const currentUser = JSON.parse(localStorage.getItem(CURRENT_USER_KEY) || 'null');
         const userRole = String(currentUser?.role ?? '').toLowerCase();
         const requiredRole = String(to.meta.requiresRole).toLowerCase();
         if (userRole !== requiredRole) {
             // Builder or unexpected role: send to their own dashboard
-            next('/analytics/dashboard');
+            next(ROUTES.ANALYTICS_DASHBOARD);
             return;
         }
     }

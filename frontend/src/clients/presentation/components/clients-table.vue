@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
+import { ClientStatus } from '../../domain/model/client-status.enum.js';
 
 const { t } = useI18n();
 const router = useRouter();
@@ -41,11 +42,11 @@ const menuItems = computed(() => [
 
 const getSeverity = (status) => {
   switch (status) {
-    case 'Active':
+    case ClientStatus.ACTIVE:
       return 'success';
-    case 'Stand by':
+    case ClientStatus.STAND_BY:
       return 'warn';
-    case 'Suspended':
+    case ClientStatus.SUSPENDED:
       return 'danger';
     default:
       return 'info';
@@ -54,9 +55,9 @@ const getSeverity = (status) => {
 
 const getStatusLabel = (status) => {
   const statusMap = {
-    'Active': 'active',
-    'Stand by': 'standBy',
-    'Suspended': 'suspended'
+    [ClientStatus.ACTIVE]: 'active',
+    [ClientStatus.STAND_BY]: 'standBy',
+    [ClientStatus.SUSPENDED]: 'suspended'
   };
   return t(`clients.status.${statusMap[status] || 'active'}`);
 };

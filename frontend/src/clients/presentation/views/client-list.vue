@@ -8,6 +8,7 @@ import { useI18n } from 'vue-i18n';
 import ClientAddDialog from '../components/client-add-dialog.vue';
 import ClientListHeader from '../components/client-list-header.vue';
 import ClientsTable from '../components/clients-table.vue';
+import { TOAST_ERROR_DURATION_MS } from '../../../shared/infrastructure/constants.js';
 
 const clientStore = useClientStore();
 const router = useRouter();
@@ -41,14 +42,14 @@ const handleSaveNewClient = async (newClientData) => {
       severity: 'success',
       summary: t('clients.messages.addSuccess'),
       detail: t('clients.messages.addSuccess'),
-      life: 3000
+      life: TOAST_ERROR_DURATION_MS
     });
   } catch (error) {
     toast.add({
       severity: 'error',
       summary: t('clients.messages.addError'),
       detail: t('clients.messages.addError'),
-      life: 3000
+      life: TOAST_ERROR_DURATION_MS
     });
   }
 };
@@ -77,14 +78,14 @@ const handleDeleteClient = (client) => {
           severity: 'success',
           summary: t('clients.messages.deleteSuccess'),
           detail: t('clients.messages.deleteSuccess'),
-          life: 3000
+          life: TOAST_ERROR_DURATION_MS
         });
       } catch (error) {
         toast.add({
           severity: 'error',
           summary: t('clients.messages.deleteError'),
           detail: t('clients.messages.deleteError'),
-          life: 3000
+          life: TOAST_ERROR_DURATION_MS
         });
       }
     }

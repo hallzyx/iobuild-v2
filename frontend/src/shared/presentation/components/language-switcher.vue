@@ -1,6 +1,7 @@
 <script setup>
 import {useI18n} from "vue-i18n";
-import { computed, ref} from "vue";
+import { computed, ref, watch} from "vue";
+import { LANG_KEY } from "../../infrastructure/storage-keys.js";
 
 const { t, locale, availableLocales } = useI18n();
 
@@ -11,6 +12,10 @@ const languageOptions = computed(() => {
   }));
 });
 const selectRef = ref(null);
+
+watch(locale, (newLang) => {
+  localStorage.setItem(LANG_KEY, newLang);
+});
 
 </script>
 

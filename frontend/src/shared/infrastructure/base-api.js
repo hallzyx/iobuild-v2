@@ -1,4 +1,6 @@
 import axios from 'axios';
+import { TOKEN_KEY, CURRENT_USER_KEY } from './storage-keys.js';
+import { ROUTES } from './paths.js';
 
 const platformApi = import.meta.env.VITE_API_URL;
 
@@ -12,7 +14,7 @@ export class BaseApi {
         // Add a request interceptor to include the JWT token
         this.#http.interceptors.request.use(
             (config) => {
-                const token = localStorage.getItem('token');
+                const token = localStorage.getItem(TOKEN_KEY);
                 if (token) {
                     config.headers.Authorization = `Bearer ${token}`;
                 }
@@ -31,13 +33,13 @@ export class BaseApi {
                     // Si YA estamos en una página pública (/login, /register-*),
                     // no redirigir — dejar que el componente muestre el error
                     const path = window.location.pathname;
-                    const isPublicPage = path === '/login' 
-                        || path === '/iam/login'
-                        || path.startsWith('/iam/register');
+                    const isPublicPage = path === ROUTES.LOGIN
+                        || path === ROUTES.IAM_LOGIN
+                        || path.startsWith(`${ROUTES.IAM_BASE}/register`);
                     if (!isPublicPage) {
-                        localStorage.removeItem('token');
-                        localStorage.removeItem('currentUser');
-                        window.location.href = '/iam/login';
+                        localStorage.removeItem(TOKEN_KEY);
+                        localStorage.removeItem(CURRENT_USER_KEY);
+                        window.location.href = ROUTES.IAM_LOGIN;
                     }
                 }
                 return Promise.reject(error);

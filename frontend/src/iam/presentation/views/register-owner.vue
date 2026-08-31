@@ -217,6 +217,8 @@ const profileStore = useProfileStore();
 
 const currentStep = ref(1);
 
+import { CLOUDINARY_WIDGET_URL } from "../../../shared/infrastructure/constants.js";
+
 // Cloudinary configuration
 const cloudinaryName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
 const cloudinaryPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
@@ -232,7 +234,7 @@ const loadCloudinaryScript = () => {
     return;
   }
   const script = document.createElement('script');
-  script.src = 'https://widget.cloudinary.com/v2.0/global/all.js';
+  script.src = CLOUDINARY_WIDGET_URL;
   script.type = 'text/javascript';
   script.onload = () => { cloudinaryReady.value = true; };
   document.head.appendChild(script);

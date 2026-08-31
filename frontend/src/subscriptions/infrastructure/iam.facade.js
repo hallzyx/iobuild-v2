@@ -1,3 +1,5 @@
+import { CURRENT_USER_KEY, TOKEN_KEY } from "../../shared/infrastructure/storage-keys.js";
+
 /**
  * IAM Facade
  * Anti-Corruption Layer (ACL) between Subscriptions and IAM bounded contexts
@@ -12,7 +14,7 @@ export class IamFacade {
      */
     static getCurrentUserId() {
         // Try to get from localStorage (IAM stores it here after authentication)
-        const storedUser = localStorage.getItem('currentUser');
+        const storedUser = localStorage.getItem(CURRENT_USER_KEY);
 
         if (storedUser) {
             try {
@@ -26,7 +28,7 @@ export class IamFacade {
         }
 
         // Try to get token to verify if user is authenticated
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem(TOKEN_KEY);
         if (!token) {
             throw new Error('Usuario no autenticado. Por favor inicia sesión.');
         }
@@ -40,8 +42,8 @@ export class IamFacade {
      * @returns {boolean} True if user has valid authentication
      */
     static isAuthenticated() {
-        const token = localStorage.getItem('token');
-        const currentUser = localStorage.getItem('currentUser');
+        const token = localStorage.getItem(TOKEN_KEY);
+        const currentUser = localStorage.getItem(CURRENT_USER_KEY);
         return !!(token && currentUser);
     }
 
@@ -50,7 +52,7 @@ export class IamFacade {
      * @returns {string|null} User email or null if not authenticated
      */
     static getCurrentUserEmail() {
-        const storedUser = localStorage.getItem('currentUser');
+        const storedUser = localStorage.getItem(CURRENT_USER_KEY);
         if (storedUser) {
             try {
                 const user = JSON.parse(storedUser);
@@ -68,7 +70,7 @@ export class IamFacade {
      * @returns {string|null} User role or null if not authenticated
      */
     static getCurrentUserRole() {
-        const storedUser = localStorage.getItem('currentUser');
+        const storedUser = localStorage.getItem(CURRENT_USER_KEY);
         if (storedUser) {
             try {
                 const user = JSON.parse(storedUser);

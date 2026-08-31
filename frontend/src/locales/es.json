@@ -21,6 +21,10 @@
     "details-title": "Detalles del Proyecto",
     "delete-header": "Eliminar Proyecto",
     "confirm-delete": "¿Está seguro de que desea eliminar el proyecto '{name}'?",
+    "unitStatus": {
+      "vacant": "Vacante",
+      "unassigned": "Sin asignar"
+    },
     "fields": {
       "name": "Nombre del Proyecto",
       "name-placeholder": "Ingrese el nombre del proyecto",

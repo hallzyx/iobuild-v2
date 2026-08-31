@@ -1,5 +1,6 @@
 import { BaseApi } from "../../shared/infrastructure/base-api.js";
 import { BaseEndpoint } from "../../shared/infrastructure/base-endpoint.js";
+import { APP_URL } from "../../shared/infrastructure/constants.js";
 
 const subscriptionsEndpointPath = import.meta.env.VITE_SUBSCRIPTIONS_ENDPOINT_PATH;
 
@@ -41,7 +42,7 @@ export class SubscriptionApi extends BaseApi {
     createCheckoutSession(builderId, planId) {
         // El backend espera las URLs de success y cancel
         // Stripe agrega automáticamente el session_id como query parameter
-        const baseUrl = window.location.origin;
+        const baseUrl = APP_URL;
         const successUrl = `${baseUrl}/subscriptions/my-subscription?success=true`;
         const cancelUrl = `${baseUrl}/subscriptions/my-subscription?canceled=true`;
 

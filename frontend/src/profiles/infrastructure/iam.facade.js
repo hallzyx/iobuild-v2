@@ -1,3 +1,5 @@
+import { CURRENT_USER_KEY, TOKEN_KEY } from "../../shared/infrastructure/storage-keys.js";
+
 /**
  * IAM Facade for Profiles Bounded Context
  * Anti-Corruption Layer (ACL) between Profiles and IAM bounded contexts
@@ -10,7 +12,7 @@ export class IamFacade {
      * @returns {string|null} User email or null if not available
      */
     static getCurrentUserEmail() {
-        const storedUser = localStorage.getItem('currentUser');
+        const storedUser = localStorage.getItem(CURRENT_USER_KEY);
         if (storedUser) {
             try {
                 const user = JSON.parse(storedUser);
@@ -28,7 +30,7 @@ export class IamFacade {
      * @returns {number|null} User ID or null if not authenticated
      */
     static getCurrentUserId() {
-        const storedUser = localStorage.getItem('currentUser');
+        const storedUser = localStorage.getItem(CURRENT_USER_KEY);
         if (storedUser) {
             try {
                 const user = JSON.parse(storedUser);
@@ -46,7 +48,7 @@ export class IamFacade {
      * @returns {string|null} Username or null if not available
      */
     static getCurrentUserUsername() {
-        const storedUser = localStorage.getItem('currentUser');
+        const storedUser = localStorage.getItem(CURRENT_USER_KEY);
         if (storedUser) {
             try {
                 const user = JSON.parse(storedUser);
@@ -64,7 +66,7 @@ export class IamFacade {
      * @returns {string|null} User role or null if not available
      */
     static getCurrentUserRole() {
-        const storedUser = localStorage.getItem('currentUser');
+        const storedUser = localStorage.getItem(CURRENT_USER_KEY);
         if (storedUser) {
             try {
                 const user = JSON.parse(storedUser);
@@ -82,8 +84,8 @@ export class IamFacade {
      * @returns {boolean} True if user has valid authentication
      */
     static isAuthenticated() {
-        const token = localStorage.getItem('token');
-        const currentUser = localStorage.getItem('currentUser');
+        const token = localStorage.getItem(TOKEN_KEY);
+        const currentUser = localStorage.getItem(CURRENT_USER_KEY);
         return !!(token && currentUser);
     }
 }

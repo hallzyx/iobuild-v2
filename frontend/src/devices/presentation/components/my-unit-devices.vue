@@ -5,13 +5,9 @@ import DeviceControlPanel from './device-control-panel.vue';
 import { useAnalyticsStore } from '../../../analytics/application/analytics.store.js';
 import { useDeviceStore } from '../../application/device.store.js';
 import { useIamStore } from '../../../iam/application/iam.store.js';
+import { isOnlineStatus } from '../../domain/model/device-status.enum.js';
 
 const { t } = useI18n();
-
-// Canonical online status taxonomy (ADR-OD-1, REQ-2 — mirrors backend IsOnline helper).
-// A device is online iff its status (trimmed, lowercased) is in this set.
-const ONLINE_STATUSES = ['online', 'active'];
-const isOnlineStatus = (s) => ONLINE_STATUSES.includes(String(s ?? '').trim().toLowerCase());
 
 const analyticsStore = useAnalyticsStore();
 const deviceStore = useDeviceStore();

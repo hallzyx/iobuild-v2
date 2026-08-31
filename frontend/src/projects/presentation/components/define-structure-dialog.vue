@@ -3,6 +3,7 @@ import { ref, computed, watch } from 'vue';
 import { useToast } from 'primevue/usetoast';
 import useProjectStore from '../../application/project.store.js';
 import { useDeviceStore } from '../../../devices/application/device.store.js';
+import { TOAST_INVOICE_ERROR_DURATION_MS, TOAST_AUTH_ERROR_DURATION_MS } from '../../../shared/infrastructure/constants.js';
 
 const props = defineProps({
     visible: {
@@ -176,7 +177,7 @@ async function handleSubmit() {
             severity: 'warn',
             summary: 'Validation error',
             detail: 'Floors and units per floor must be at least 1.',
-            life: 4000
+            life: TOAST_INVOICE_ERROR_DURATION_MS
         });
         return;
     }
@@ -189,7 +190,7 @@ async function handleSubmit() {
             severity: 'success',
             summary: 'Structure defined',
             detail: `${floors.value} floor(s) × ${unitsPerFloor.value} unit(s) created successfully.`,
-            life: 4000
+            life: TOAST_INVOICE_ERROR_DURATION_MS
         });
         localVisible.value = false;
         emit('structure-defined');
@@ -200,28 +201,28 @@ async function handleSubmit() {
                 severity: 'warn',
                 summary: 'Structure already defined',
                 detail: 'This project already has a structure. You cannot redefine it.',
-                life: 5000
+                life: TOAST_AUTH_ERROR_DURATION_MS
             });
         } else if (status === 403) {
             toast.add({
                 severity: 'error',
                 summary: 'Access denied',
                 detail: 'Only builders can define project structure.',
-                life: 5000
+                life: TOAST_AUTH_ERROR_DURATION_MS
             });
         } else if (status === 422) {
             toast.add({
                 severity: 'error',
                 summary: 'Validation error',
                 detail: 'Invalid structure data. Floors and units per floor must be ≥ 1.',
-                life: 5000
+                life: TOAST_AUTH_ERROR_DURATION_MS
             });
         } else {
             toast.add({
                 severity: 'error',
                 summary: 'Error',
                 detail: 'An unexpected error occurred. Please try again.',
-                life: 5000
+                life: TOAST_AUTH_ERROR_DURATION_MS
             });
         }
     } finally {

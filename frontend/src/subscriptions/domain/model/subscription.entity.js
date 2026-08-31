@@ -1,3 +1,5 @@
+import { isActiveStatus } from "./subscription-status.enum.js";
+
 /**
  * Subscription Entity
  * Represents a subscription with its plan details
@@ -23,9 +25,7 @@ export class Subscription {
      * Check if subscription is active
      */
     isActive() {
-        // Backend serializes the status enum as PascalCase ("Active"); compare
-        // case-insensitively so this doesn't silently always return false.
-        return this.status?.toLowerCase() === 'active';
+        return isActiveStatus(this.status);
     }
 
     /**

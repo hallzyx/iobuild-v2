@@ -302,13 +302,13 @@ async function clearUnitOwner(unit) {
                   v-else
                   class="unit-card"
                   :class="unit.ownerEmail ? 'unit-card--occupied' : 'unit-card--vacant'"
-                  :title="unit.ownerEmail || 'Unassigned'"
+                  :title="unit.ownerEmail || t('projects.unitStatus.unassigned')"
               >
                 <div class="unit-card__top">
                   <i class="pi" :class="unit.ownerEmail ? 'pi-user' : 'pi-home'"></i>
                   <span class="unit-card__no">{{ unit.roomNumber }}</span>
                 </div>
-                <span class="unit-card__status">{{ unit.ownerEmail || 'Vacant' }}</span>
+                <span class="unit-card__status">{{ unit.ownerEmail || t('projects.unitStatus.vacant') }}</span>
               </div>
             </template>
           </div>

@@ -8,15 +8,12 @@ import UnitCard from './unit-card.component.vue';
 import LiveEnergyChart from './live-energy-chart.component.vue';
 import { useAnalyticsStore } from '../../application/analytics.store.js';
 import { useIamStore } from '../../../iam/application/iam.store.js';
+import { ANALYTICS_DEFAULT_MINUTES } from '../../../shared/infrastructure/constants.js';
+import { isOnlineStatus } from '../../../devices/domain/model/device-status.enum.js';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend, Filler);
 
 const { t } = useI18n();
-
-// Canonical online status taxonomy (ADR-OD-1, REQ-2 — mirrors backend IsOnline helper).
-// A device is online iff its status (trimmed, lowercased) is in this set.
-const ONLINE_STATUSES = ['online', 'active'];
-const isOnlineStatus = (s) => ONLINE_STATUSES.includes(String(s ?? '').trim().toLowerCase());
 
 const props = defineProps({
   dashboard: {
@@ -28,8 +25,8 @@ const props = defineProps({
 const analyticsStore = useAnalyticsStore();
 const iamStore = useIamStore();
 
-const userId = computed(() => iamStore.currentUser?.id || 1);
-const liveMinutes = ref(10);
+const userId = computed(() => iamStore.currentUser?.id ?? null);
+const liveMinutes = ref(ANALYTICS_DEFAULT_MINUTES);
 
 const timeRange = ref('24h');
 const timeRangeOptions = [
